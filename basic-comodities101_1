@@ -1,0 +1,61 @@
+##Disclaimer: notebook ini diperuntukkan untuk menyimpan progress kodingan TA##
+#impor librari utk ML,Round Value, Ploting Grafik
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import datetime
+
+#plot dataframe dgn impor csv dari local drive
+#buat fungsi upload csv
+from google.colab import files
+uploaded = files.upload()
+
+#plot hasil upload csv ke dataframe, gunakan fungsi import io
+import io
+dataframe = pd.read_csv(io.BytesIO(uploaded['AirQualityUCI.csv']), sep = ';', decimal = ',')
+dataframe = dataframe.iloc[:,0:14]
+dataframe = dataframe.iloc[0:8763]
+dataframe.head(10) #print df
+
+#import datetime , untuk memunculkan list tanggal
+#Menambahkan struktur pada row date
+dataframe['DateTime'] = (dataframe.Date) # + ' ' + (dataframe.Time)
+dataframe.DateTime = dataframe.DateTime.apply(lambda x: datetime.datetime.strptime(x, '%d/%m/%Y')) # %H.%M.%S'))
+
+#implementasi SMA
+#implementasi di index PT
+#ploting komoditas PT
+
+dataframe_PT = pd.DataFrame(dataframe.iloc[:,3])
+dataframe_PT.index = dataframe.DateTime #menambahkan datetime pada index yang dimunculkan
+dataframe_PT.head(10)
+
+#Implementasi SMA pada hari ke 3
+span=4 #rentang hari yang diprediksi
+dataframe_PT['SMA_Day_3'] = dataframe.iloc[:,3].rolling(window=span).mean()
+dataframe_PT.head(10)
+
+#ploting data yang sudah di implementasi
+plt.figure(figsize=[15,8])
+plt.grid(True)
+plt.plot(dataframe_PT.head(10)['PT08.S1(CO)'],label='data asli'),
+plt.plot(dataframe_PT.head(10)['SMA_Day_3'],label='SMA Day-3')
+plt.legend(loc=2)
+
+#implemntasi EMA dengan metode pandas EMA
+dataframe_PT['EMA'] = dataframe.iloc[:,3].ewm(span=4,adjust=False).mean()
+dataframe_PT.head(10)
+
+#ploting data yang sudah di implementasi SMA,EMA dan data asli
+
+plt.figure(figsize=[15,8])
+plt.grid(True)
+plt.plot(dataframe_PT.head(10)['PT08.S1(CO)'],label='data asli')
+plt.plot(dataframe_PT.head(10)['SMA_Day_3'],label='SMA Day-3')
+plt.plot(dataframe_PT.head(10)['EMA'],label='EMA')
+plt.legend(loc=3)
+
+#implementasi CMA
+dataframe_PT['CMA_Day_4'] = dataframe.iloc[:,3].expanding(min_periods=4).mean()
+dataframe_PT.head(10)
